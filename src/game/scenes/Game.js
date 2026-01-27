@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 
 export class Game extends Scene {
+
     constructor() {
         super('Game');
     }
@@ -16,6 +17,16 @@ export class Game extends Scene {
             frameWidth: 444,
             frameHeight: 773
         });
+
+        this.load.spritesheet('crouch', 'assets/sprites/nana_crouch.png', {
+            frameWidth: 444,
+            frameHeight: 773
+        });
+
+        this.load.spritesheet('jump', 'assets/sprites/nana_jump.png', {
+            frameWidth: 444,
+            frameHeight: 773
+        });
     }
 
     create() {
@@ -24,20 +35,7 @@ export class Game extends Scene {
 
         this.physics.world.setBounds(0, 0, w, h);
 
-        this.anims.create({
-            key: 'idle',
-            frames: [{ key: 'player', frame: 0 }],
-            frameRate: 1,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 1 }),
-            frameRate: 4,
-            repeat: -1
-        });
-
+        this.initiateAnimations();
         this.createSky(w, h);
         this.createClouds(w, h);
         this.createGround(w, h);
@@ -49,6 +47,44 @@ export class Game extends Scene {
     update(time, delta) {
         this.animateClouds(delta);
         this.updatePlayerMovement();
+    }
+
+    initiateAnimations() {
+        this.anims.create({
+            key: 'idle',
+            frames: [{ key: 'player', frame: 0 }],
+            frameRate: 1,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'walk',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 1 }),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'crouchIdle',
+            frames: [{ key: 'crouch', frame: 0 }],
+            frameRate: 1,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'crouchWalk',
+            frames: this.anims.generateFrameNumbers('crouch', { start: 0, end: 1 }),
+            frameRate: 4,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'jump',
+            frames: [{ key: 'jump', frame: 0 }],
+            frameRate: 1,
+            repeat: -1
+        });
+
     }
 
     createSky(w, h) {
@@ -149,23 +185,56 @@ export class Game extends Scene {
     }
 
     updatePlayerMovement() {
-        const speed = 200;
+        const down = this.cursors.down.isDown;
+        const left = this.cursors.left.isDown;
+        const right = this.cursors.right.isDown;
+        const onGround = this.player.body.blocked.down;
 
+        const speed = down ? 100 : 200;
+
+        // --- CROUCH ---
+        if (down) {
+            this.player.setVelocityX(0);
+
+            if (left) {
+                this.player.setVelocityX(-speed);
+                this.player.setFlipX(true);
+                this.player.play('crouchWalk', true);
+            } else if (right) {
+                this.player.setVelocityX(speed);
+                this.player.setFlipX(false);
+                this.player.play('crouchWalk', true);
+            } else {
+                this.player.play('crouchIdle', true);
+            }
+            return;
+        }
+
+        // --- PULO ---
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && onGround) {
+            this.player.setVelocityY(-720);
+            this.player.play('jump', true);
+            return;
+        }
+
+        if (!onGround) {
+            this.player.play('jump', true);
+            return;
+        }
+
+        // --- MOVIMENTO NORMAL ---
         this.player.setVelocityX(0);
 
-        if (this.cursors.left.isDown) {
+        if (left) {
             this.player.setVelocityX(-speed);
             this.player.setFlipX(true);
             this.player.play('walk', true);
-        }
-        else if (this.cursors.right.isDown) {
+        } else if (right) {
             this.player.setVelocityX(speed);
             this.player.setFlipX(false);
             this.player.play('walk', true);
-        }
-        else {
+        } else {
             this.player.play('idle', true);
         }
     }
-
 }
