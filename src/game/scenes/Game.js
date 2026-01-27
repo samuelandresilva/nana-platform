@@ -11,6 +11,11 @@ export class Game extends Scene {
         this.load.image('cloud2', 'assets/tiles/cloud2.png');
         this.load.image('cloud3', 'assets/tiles/cloud3.png');
         this.load.image('groundTile', 'assets/tiles/ground.png');
+
+        this.load.spritesheet('player', 'assets/sprites/nana_walk.png', {
+            frameWidth: 444,
+            frameHeight: 773
+        });
     }
 
     create() {
@@ -19,13 +24,31 @@ export class Game extends Scene {
 
         this.physics.world.setBounds(0, 0, w, h);
 
+        this.anims.create({
+            key: 'idle',
+            frames: [{ key: 'player', frame: 0 }],
+            frameRate: 1,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'walk',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 1 }),
+            frameRate: 4,
+            repeat: -1
+        });
+
         this.createSky(w, h);
         this.createClouds(w, h);
         this.createGround(w, h);
+        this.createPlayer();
+
+        this.cursors = this.input.keyboard.createCursorKeys();
     }
 
     update(time, delta) {
         this.animateClouds(delta);
+        this.updatePlayerMovement();
     }
 
     createSky(w, h) {
@@ -83,7 +106,7 @@ export class Game extends Scene {
     createGround(w, h) {
         const groundHeight = 70;
 
-        const ground = this.add.rectangle(
+        this.ground = this.add.rectangle(
             w / 2,
             h - groundHeight / 2,
             w,
@@ -91,9 +114,9 @@ export class Game extends Scene {
             0x444444
         );
 
-        ground.setFillStyle(0x000000, 0);
+        this.ground.setFillStyle(0x000000, 0);
 
-        this.physics.add.existing(ground, true);
+        this.physics.add.existing(this.ground, true);
 
         this.add.tileSprite(
             w / 2,
@@ -103,4 +126,46 @@ export class Game extends Scene {
             'groundTile'
         );
     }
+
+    createPlayer() {
+        this.player = this.physics.add.sprite(100, 100, 'player');
+
+        this.player.setScale(0.2);
+        this.player.body.setSize(
+            this.player.width * 0.35,
+            this.player.height * 0.6,
+            true
+        );
+
+        this.player.body.setOffset(
+            this.player.width * 0.325,
+            this.player.height * 0.35
+        );
+        this.player.setCollideWorldBounds(true);
+        this.player.setGravityY(900);
+        this.physics.add.collider(this.player, this.ground);
+
+        this.player.play('idle');
+    }
+
+    updatePlayerMovement() {
+        const speed = 200;
+
+        this.player.setVelocityX(0);
+
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-speed);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        }
+        else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(speed);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        }
+        else {
+            this.player.play('idle', true);
+        }
+    }
+
 }
