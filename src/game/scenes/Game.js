@@ -33,6 +33,9 @@ export class Game extends Scene {
         const w = this.scale.width;
         const h = this.scale.height;
 
+        this.coyoteTimeMs = 120;
+        this.coyoteTimerMs = 0;
+
         this.physics.world.setBounds(0, 0, w, h);
 
         this.initiateAnimations();
@@ -46,6 +49,7 @@ export class Game extends Scene {
 
     update(time, delta) {
         this.animateClouds(delta);
+        this.updateCoyoteTimer(delta);
         this.updatePlayerMovement();
     }
 
@@ -184,6 +188,17 @@ export class Game extends Scene {
         this.player.play('idle');
     }
 
+    updateCoyoteTimer(delta) {
+        const onGround = this.player.body.blocked.down;
+
+        if (onGround) {
+            this.coyoteTimerMs = this.coyoteTimeMs;
+        } else {
+            this.coyoteTimerMs = Math.max(0, this.coyoteTimerMs - delta);
+        }
+    }
+
+
     updatePlayerMovement() {
         const down = this.cursors.down.isDown;
         const left = this.cursors.left.isDown;
@@ -211,11 +226,13 @@ export class Game extends Scene {
         }
 
         // --- PULO ---
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && onGround) {
+        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.coyoteTimerMs > 0) {
             this.player.setVelocityY(-720);
             this.player.play('jump', true);
+            this.coyoteTimerMs = 0; // gasta o coyote (impede pulo duplo)
             return;
         }
+
 
         if (!onGround) {
             this.player.play('jump', true);
