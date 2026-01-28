@@ -40,7 +40,9 @@ export class Game extends Scene {
 
         this.worldWidth = w * 3;
         this.worldHeight = h;
-        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
+        this.fallLimit = 300;
+        this.worldBoundsHeight = this.worldHeight + this.fallLimit;
+        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldBoundsHeight);
 
         this.initiateAnimations();
         this.createSky();
@@ -49,6 +51,7 @@ export class Game extends Scene {
         this.createObstacles();
         this.createPlayer();
         this.configureCamera();
+        this.createDeathZone();
 
         this.physics.add.collider(this.player, this.obstacles);
 
@@ -62,40 +65,50 @@ export class Game extends Scene {
     }
 
     initiateAnimations() {
-        this.anims.create({
-            key: 'idle',
-            frames: [{ key: 'player', frame: 0 }],
-            frameRate: 1,
-            repeat: -1
-        });
+        if (!this.anims.exists('idle')) {
+            this.anims.create({
+                key: 'idle',
+                frames: [{ key: 'player', frame: 0 }],
+                frameRate: 1,
+                repeat: -1
+            });
+        }
 
-        this.anims.create({
-            key: 'walk',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 1 }),
-            frameRate: 6,
-            repeat: -1
-        });
+        if (!this.anims.exists('walk')) {
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 1 }),
+                frameRate: 6,
+                repeat: -1
+            });
+        }
 
-        this.anims.create({
-            key: 'crouchIdle',
-            frames: [{ key: 'crouch', frame: 0 }],
-            frameRate: 1,
-            repeat: -1
-        });
+        if (!this.anims.exists('crouchIdle')) {
+            this.anims.create({
+                key: 'crouchIdle',
+                frames: [{ key: 'crouch', frame: 0 }],
+                frameRate: 1,
+                repeat: -1
+            });
+        }
 
-        this.anims.create({
-            key: 'crouchWalk',
-            frames: this.anims.generateFrameNumbers('crouch', { start: 0, end: 1 }),
-            frameRate: 4,
-            repeat: -1
-        });
+        if (!this.anims.exists('crouchWalk')) {
+            this.anims.create({
+                key: 'crouchWalk',
+                frames: this.anims.generateFrameNumbers('crouch', { start: 0, end: 1 }),
+                frameRate: 4,
+                repeat: -1
+            });
+        }
 
-        this.anims.create({
-            key: 'jump',
-            frames: [{ key: 'jump', frame: 0 }],
-            frameRate: 1,
-            repeat: -1
-        });
+        if (!this.anims.exists('jump')) {
+            this.anims.create({
+                key: 'jump',
+                frames: [{ key: 'jump', frame: 0 }],
+                frameRate: 1,
+                repeat: -1
+            });
+        }
     }
 
     createSky() {
@@ -141,34 +154,59 @@ export class Game extends Scene {
 
     createGround() {
         const groundHeight = 70;
-        const groundWidth = this.worldWidth;
+        const groundY = this.worldHeight - groundHeight / 2;
 
-        this.ground = this.add.rectangle(
-            groundWidth / 2,
-            this.worldHeight - groundHeight / 2,
-            groundWidth,
-            groundHeight,
-            0x000000,
-            0
-        );
+        this.groundSegments = this.physics.add.staticGroup();
+        this.groundHoles = [
+            { x: 1080, width: 160 },
+            { x: 1580, width: 160 }
+        ];
 
-        this.physics.add.existing(this.ground, true);
+        this.createGroundSegments(groundHeight, groundY, this.groundHoles);
+    }
 
-        this.add.tileSprite(
-            groundWidth / 2,
-            this.worldHeight - groundHeight / 2,
-            groundWidth,
-            groundHeight,
-            'groundTile'
-        );
+    createGroundSegments(groundHeight, groundY, holes) {
+        const ranges = holes
+            .map((hole) => ({
+                start: Math.max(0, hole.x - hole.width / 2),
+                end: Math.min(this.worldWidth, hole.x + hole.width / 2)
+            }))
+            .filter((hole) => hole.end > hole.start)
+            .sort((a, b) => a.start - b.start);
+
+        let cursor = 0;
+
+        for (const hole of ranges) {
+            const width = hole.start - cursor;
+
+            if (width > 0) {
+                this.addGroundSegment(cursor + width / 2, groundY, width, groundHeight);
+            }
+
+            cursor = Math.max(cursor, hole.end);
+        }
+
+        const tailWidth = this.worldWidth - cursor;
+
+        if (tailWidth > 0) {
+            this.addGroundSegment(cursor + tailWidth / 2, groundY, tailWidth, groundHeight);
+        }
+    }
+
+    addGroundSegment(x, y, width, height) {
+        const body = this.add.rectangle(x, y, width, height, 0x000000, 0);
+        this.physics.add.existing(body, true);
+        this.groundSegments.add(body);
+
+        this.add.tileSprite(x, y, width, height, 'groundTile');
     }
 
     createObstacles() {
         this.obstacles = this.physics.add.staticGroup();
 
-        this.addObstacle(600, 550, 520, 40);
-        this.addObstacle(850, 410, 180, 40);
-        this.addObstacle(1150, 400, 180, 40);
+        this.addObstacle(600, 550, 350, 40);
+        this.addObstacle(950, 420, 100, 40);
+        this.addObstacle(1350, 400, 180, 40);
         this.addObstacle(1400, 540, 140, 40);
     }
 
@@ -188,7 +226,7 @@ export class Game extends Scene {
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(900);
 
-        this.physics.add.collider(this.player, this.ground);
+        this.physics.add.collider(this.player, this.groundSegments);
 
         this.standHitbox = {
             width: this.player.width * 0.6,
@@ -325,5 +363,26 @@ export class Game extends Scene {
         this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
         this.cameras.main.setDeadzone(300, 200);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+    }
+
+    createDeathZone() {
+        const zoneHeight = 200;
+        const zoneY = this.worldHeight + this.fallLimit - zoneHeight / 2;
+
+        this.deathZone = this.add.rectangle(
+            this.worldWidth / 2,
+            zoneY,
+            this.worldWidth,
+            zoneHeight,
+            0x000000,
+            0
+        );
+
+        this.physics.add.existing(this.deathZone, true);
+        this.physics.add.overlap(this.player, this.deathZone, this.restartLevel, null, this);
+    }
+
+    restartLevel() {
+        this.scene.restart();
     }
 }
