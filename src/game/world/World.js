@@ -32,12 +32,15 @@ export class World {
     }
 
     static create(scene, props = {}) {
-        const world = new World(scene, props.worldWidth, props.worldHeight);
-        world.#createSky();
-        world.#createClouds();
-        world.#createGround(props.groundHoles);
-        world.#createObstacles(props.obstacles);
-        return world;
+        return new World(scene, props.worldWidth, props.worldHeight).setup(props);
+    }
+
+    setup(props = {}) {
+        this.#createSky();
+        this.#createClouds();
+        this.#createGround(props.groundHoles);
+        this.#createObstacles(props.obstacles);
+        return this;
     }
 
     #createSky() {

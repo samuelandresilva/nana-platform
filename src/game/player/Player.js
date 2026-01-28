@@ -88,10 +88,13 @@ export class Player {
     }
 
     static create(scene, props = {}) {
-        const player = new Player(scene, props.state);
-        player.#createAnimations(scene);
-        player.#createPlayer(scene, props);
-        return player;
+        return new Player(scene, props.state).setup(props);
+    }
+
+    setup(props = {}) {
+        this.#createAnimations(this.scene);
+        this.#createPlayer(this.scene, props);
+        return this;
     }
 
     #createAnimations(scene) {

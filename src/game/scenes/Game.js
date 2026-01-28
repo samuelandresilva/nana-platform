@@ -22,14 +22,12 @@ export class Game extends Scene {
 
         this.physics.world.setBounds(0, 0, this.worldWidth, this.worldBoundsHeight);
 
-        this.world = World.create(this, {
-            worldWidth: this.worldWidth,
-            worldHeight: this.worldHeight,
+        this.world = new World(this, this.worldWidth, this.worldHeight).setup({
             groundHoles: LEVEL_1.groundHoles,
             obstacles: LEVEL_1.obstacles
         });
 
-        this.playerController = Player.create(this, {
+        this.playerController = new Player(this).setup({
             groundSegments: this.world.groundSegments,
             shouldCollideWithGround: this.shouldCollideWithGround,
             shouldCollideContext: this
