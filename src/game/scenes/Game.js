@@ -14,6 +14,7 @@ export class Game extends Scene {
         Player.preloadAssets(this);
         this.load.audio('bgm_main', 'assets/audio/music/bgm_main.m4a');
         this.load.audio('sfx_game_over', 'assets/audio/sfx/game_over.mp3');
+        this.load.audio('sfx_esa', 'assets/audio/sfx/esa.mp3');
     }
 
     create() {
@@ -102,6 +103,7 @@ export class Game extends Scene {
         }
 
         this.sound.play('sfx_game_over');
+        this.sound.play('sfx_esa');
         this.time.delayedCall(2000, () => {
             this.scene.restart();
         });
