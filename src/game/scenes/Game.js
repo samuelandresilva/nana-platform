@@ -27,6 +27,8 @@ export class Game extends Scene {
             frameWidth: 444,
             frameHeight: 773
         });
+
+        this.load.image('block', 'assets/tiles/block.png');
     }
 
     create() {
@@ -36,13 +38,19 @@ export class Game extends Scene {
         this.coyoteTimeMs = 120;
         this.coyoteTimerMs = 0;
 
-        this.physics.world.setBounds(0, 0, w, h);
+        this.worldWidth = w * 3;
+        this.worldHeight = h;
+        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight);
 
         this.initiateAnimations();
-        this.createSky(w, h);
-        this.createClouds(w, h);
-        this.createGround(w, h);
+        this.createSky();
+        this.createClouds();
+        this.createGround();
+        this.createObstacles();
         this.createPlayer();
+        this.configureCamera();
+
+        this.physics.add.collider(this.player, this.obstacles);
 
         this.cursors = this.input.keyboard.createCursorKeys();
     }
@@ -88,116 +96,144 @@ export class Game extends Scene {
             frameRate: 1,
             repeat: -1
         });
-
     }
 
-    createSky(w, h) {
+    createSky() {
         this.add.tileSprite(
-            w / 2,
-            h / 2,
-            w,
-            h,
+            this.worldWidth / 2,
+            this.worldHeight / 2,
+            this.worldWidth,
+            this.worldHeight,
             'skyTile'
         );
     }
 
-    createClouds(w, h) {
+    createClouds() {
         this.cloudKeys = ['cloud1', 'cloud2', 'cloud3'];
-
         this.clouds = [];
 
-        const count = 5;
-
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < 20; i++) {
             const key = Phaser.Utils.Array.GetRandom(this.cloudKeys);
-
             const cloud = this.add.image(
-                Phaser.Math.Between(0, w),
+                Phaser.Math.Between(0, this.worldWidth),
                 Phaser.Math.Between(60, 220),
                 key
             );
 
-            const speed = 60;
-            this.clouds.push({ cloud, speed });
+            this.clouds.push({ cloud, speed: 60 });
         }
     }
 
     animateClouds(delta) {
-        if (!this.clouds) return;
-
         const dt = Math.min(delta, 33) / 1000;
-        const w = this.scale.width;
 
         for (const item of this.clouds) {
             const cloud = item.cloud;
-
             cloud.x -= item.speed * dt;
 
-            const half = Math.ceil(cloud.displayWidth / 2);
-
+            const half = cloud.displayWidth / 2;
             if (cloud.x < -half) {
-                cloud.x = w + half;
+                cloud.x = this.worldWidth + half;
                 cloud.y = Phaser.Math.Between(60, 220);
-                item.speed = 60;
             }
         }
     }
 
-    createGround(w, h) {
+    createGround() {
         const groundHeight = 70;
+        const groundWidth = this.worldWidth;
 
         this.ground = this.add.rectangle(
-            w / 2,
-            h - groundHeight / 2,
-            w,
+            groundWidth / 2,
+            this.worldHeight - groundHeight / 2,
+            groundWidth,
             groundHeight,
-            0x444444
+            0x000000,
+            0
         );
-
-        this.ground.setFillStyle(0x000000, 0);
 
         this.physics.add.existing(this.ground, true);
 
         this.add.tileSprite(
-            w / 2,
-            h - groundHeight / 2,
-            w,
+            groundWidth / 2,
+            this.worldHeight - groundHeight / 2,
+            groundWidth,
             groundHeight,
             'groundTile'
         );
     }
 
+    createObstacles() {
+        this.obstacles = this.physics.add.staticGroup();
+
+        this.addObstacle(600, 550, 520, 40);
+        this.addObstacle(850, 410, 180, 40);
+        this.addObstacle(1150, 400, 180, 40);
+        this.addObstacle(1400, 540, 140, 40);
+    }
+
+    addObstacle(x, y, width, height) {
+        const body = this.add.rectangle(x, y, width, height, 0x000000, 0);
+        this.physics.add.existing(body, true);
+        this.obstacles.add(body);
+
+        this.add.tileSprite(x, y, width, height, 'block').setDepth(10);
+    }
+
     createPlayer() {
         this.player = this.physics.add.sprite(100, 100, 'player');
-
+        this.player.setDepth(999);
         this.player.setScale(0.2);
-        this.player.body.setSize(
-            this.player.width * 0.35,
-            this.player.height * 0.6,
-            true
-        );
-
-        this.player.body.setOffset(
-            this.player.width * 0.325,
-            this.player.height * 0.35
-        );
+        this.player.setOrigin(0.5, 1);
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(900);
+
         this.physics.add.collider(this.player, this.ground);
+
+        this.standHitbox = {
+            width: this.player.width * 0.6,
+            height: this.player.height * 0.7,
+            offsetX: this.player.width * 0.225,
+            offsetY: this.player.height * 0.25
+        };
+
+        this.crouchHitbox = {
+            width: this.player.width * 0.6,
+            height: this.player.height * 0.45,
+            offsetX: this.player.width * 0.225,
+            offsetY: this.player.height * 0.5
+        };
+
+        this.isCrouching = false;
+        this.applyHitbox(this.standHitbox);
 
         this.player.play('idle');
     }
 
-    updateCoyoteTimer(delta) {
-        const onGround = this.player.body.blocked.down;
+    applyHitbox(cfg) {
+        this.player.body.setSize(cfg.width, cfg.height, true);
+        this.player.body.setOffset(cfg.offsetX, cfg.offsetY);
+    }
 
-        if (onGround) {
+    enterCrouch() {
+        if (this.isCrouching) return;
+        this.isCrouching = true;
+        this.applyHitbox(this.crouchHitbox);
+    }
+
+    exitCrouch() {
+        if (!this.isCrouching) return;
+        this.isCrouching = false;
+        this.applyHitbox(this.standHitbox);
+    }
+
+    updateCoyoteTimer(delta) {
+        if (this.player.body.blocked.down) {
             this.coyoteTimerMs = this.coyoteTimeMs;
         } else {
             this.coyoteTimerMs = Math.max(0, this.coyoteTimerMs - delta);
         }
     }
-
 
     updatePlayerMovement() {
         const down = this.cursors.down.isDown;
@@ -205,9 +241,11 @@ export class Game extends Scene {
         const right = this.cursors.right.isDown;
         const onGround = this.player.body.blocked.down;
 
+        if (down) this.enterCrouch();
+        else this.exitCrouch();
+
         const speed = down ? 100 : 200;
 
-        // --- CROUCH ---
         if (down) {
             this.player.setVelocityX(0);
 
@@ -225,21 +263,18 @@ export class Game extends Scene {
             return;
         }
 
-        // --- PULO ---
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up) && this.coyoteTimerMs > 0) {
             this.player.setVelocityY(-720);
             this.player.play('jump', true);
-            this.coyoteTimerMs = 0; // gasta o coyote (impede pulo duplo)
+            this.coyoteTimerMs = 0;
             return;
         }
-
 
         if (!onGround) {
             this.player.play('jump', true);
             return;
         }
 
-        // --- MOVIMENTO NORMAL ---
         this.player.setVelocityX(0);
 
         if (left) {
@@ -253,5 +288,11 @@ export class Game extends Scene {
         } else {
             this.player.play('idle', true);
         }
+    }
+
+    configureCamera() {
+        this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
+        this.cameras.main.setDeadzone(300, 200);
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     }
 }
