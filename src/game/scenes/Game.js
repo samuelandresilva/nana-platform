@@ -13,9 +13,11 @@ export class Game extends Scene {
         World.preloadAssets(this);
         Player.preloadAssets(this);
         this.load.audio('bgm_main', 'assets/audio/music/bgm_main.m4a');
+        this.load.audio('sfx_game_over', 'assets/audio/sfx/game_over.mp3');
     }
 
     create() {
+        this.isGameOver = false;
         this.worldWidth = this.scale.width * 3;
         this.worldHeight = this.scale.height;
         this.fallLimit = 300;
@@ -82,10 +84,26 @@ export class Game extends Scene {
         );
 
         this.physics.add.existing(this.deathZone, true);
-        this.physics.add.overlap(this.player, this.deathZone, this.restartLevel, null, this);
+        this.physics.add.overlap(this.player, this.deathZone, this.handleGameOver, null, this);
     }
 
-    restartLevel() {
-        this.scene.restart();
+    handleGameOver() {
+        if (this.isGameOver) return;
+        this.isGameOver = true;
+
+        if (this.player?.body) {
+            this.player.setVelocity(0);
+        }
+
+        if (this.bgm?.isPlaying) {
+            this.bgm.stop();
+        } else {
+            this.sound.stopByKey('bgm_main');
+        }
+
+        this.sound.play('sfx_game_over');
+        this.time.delayedCall(2000, () => {
+            this.scene.restart();
+        });
     }
 }
