@@ -7,11 +7,12 @@ export class Game extends Scene {
     }
 
     preload() {
-        this.load.image('skyTile', 'assets/tiles/sky.png');
+        this.load.image('sky', 'assets/tiles/sky.png');
         this.load.image('cloud1', 'assets/tiles/cloud1.png');
         this.load.image('cloud2', 'assets/tiles/cloud2.png');
         this.load.image('cloud3', 'assets/tiles/cloud3.png');
-        this.load.image('groundTile', 'assets/tiles/ground.png');
+        this.load.image('ground', 'assets/tiles/ground.png');
+        this.load.image('block', 'assets/tiles/block.png');
 
         this.load.spritesheet('player', 'assets/sprites/nana_walk.png', {
             frameWidth: 444,
@@ -27,22 +28,17 @@ export class Game extends Scene {
             frameWidth: 444,
             frameHeight: 773
         });
-
-        this.load.image('block', 'assets/tiles/block.png');
     }
 
     create() {
-        const w = this.scale.width;
-        const h = this.scale.height;
-
-        this.coyoteTimeMs = 120;
-        this.coyoteTimerMs = 0;
-
-        this.worldWidth = w * 3;
-        this.worldHeight = h;
+        this.worldWidth = this.scale.width * 3;
+        this.worldHeight = this.scale.height;
         this.fallLimit = 300;
         this.worldBoundsHeight = this.worldHeight + this.fallLimit;
+        
         this.physics.world.setBounds(0, 0, this.worldWidth, this.worldBoundsHeight);
+
+        this.coyoteTimerMs = 0;
 
         this.initiateAnimations();
         this.createSky();
@@ -117,7 +113,7 @@ export class Game extends Scene {
             this.worldHeight / 2,
             this.worldWidth,
             this.worldHeight,
-            'skyTile'
+            'sky'
         );
     }
 
@@ -204,7 +200,7 @@ export class Game extends Scene {
         this.physics.add.existing(body, true);
         this.groundSegments.add(body);
 
-        this.add.tileSprite(x, y, width, height, 'groundTile');
+        this.add.tileSprite(x, y, width, height, 'ground');
     }
 
     createObstacles() {
@@ -315,7 +311,7 @@ export class Game extends Scene {
 
     updateCoyoteTimer(delta) {
         if (this.player.body.blocked.down) {
-            this.coyoteTimerMs = this.coyoteTimeMs;
+            this.coyoteTimerMs = 120;
         } else {
             this.coyoteTimerMs = Math.max(0, this.coyoteTimerMs - delta);
         }
