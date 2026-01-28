@@ -85,6 +85,8 @@ export class Player {
             frameWidth: PLAYER_CONFIG.assets.frameWidth,
             frameHeight: PLAYER_CONFIG.assets.frameHeight
         });
+
+        scene.load.audio('sfx_jump', 'assets/audio/sfx/jump.mp3');
     }
 
     static create(scene, props = {}) {
@@ -266,6 +268,7 @@ export class Player {
         if (Phaser.Input.Keyboard.JustDown(cursors.up) && this.state.coyoteTimerMs > 0) {
             player.setVelocityY(PLAYER_CONFIG.movement.jumpVelocity);
             player.play('jump', true);
+            this.scene.sound.play('sfx_jump');
             this.state.coyoteTimerMs = 0;
             return;
         }
