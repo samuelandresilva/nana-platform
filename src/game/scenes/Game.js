@@ -33,6 +33,7 @@ export class Game extends Scene {
             shouldCollideWithGround: this.shouldCollideWithGround,
             shouldCollideContext: this
         });
+        this.character = this.player.character;
 
         this.configureCamera();
         this.createDeathZone();

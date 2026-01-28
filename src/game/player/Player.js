@@ -6,7 +6,6 @@ export class Player {
     }
 
     static preloadAssets(scene) {
-        alert('preloadPlayerAssets');
         scene.load.spritesheet('player', 'assets/sprites/nana_walk.png', {
             frameWidth: 444,
             frameHeight: 773
@@ -24,8 +23,6 @@ export class Player {
     }
 
     static create(scene, props = {}) {
-        alert('createPlayer');
-        console.log(props);
         const player = new Player(scene, props.state);
         player.#createAnimations(scene);
         player.#createCharacter(scene, props);
@@ -33,7 +30,6 @@ export class Player {
     }
 
     #createAnimations(scene) {
-        alert('createPlayerAnimations');
         if (!scene.anims.exists('idle')) {
             scene.anims.create({
                 key: 'idle',
@@ -81,7 +77,6 @@ export class Player {
     }
 
     #createCharacter(scene, props = {}) {
-        alert('createCharacter');
         const character = scene.physics.add.sprite(100, 100, 'player');
         character.setDepth(999);
         character.setScale(0.2);
@@ -125,7 +120,7 @@ export class Player {
         this.#applyHitbox(character, standHitbox);
         character.play('idle');
 
-        scene.character = character;
+        this.character = character;
     }
 
     #applyHitbox(character, cfg) {
