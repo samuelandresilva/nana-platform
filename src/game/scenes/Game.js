@@ -223,8 +223,38 @@ export class Game extends Scene {
 
     exitCrouch() {
         if (!this.isCrouching) return;
+        if (!this.canStandUp()) return;
         this.isCrouching = false;
         this.applyHitbox(this.standHitbox);
+    }
+
+    canStandUp() {
+        const scaleX = this.player.scaleX;
+        const scaleY = this.player.scaleY;
+        const extraHeight = (this.standHitbox.height - this.crouchHitbox.height) * scaleY;
+
+        if (extraHeight <= 0) return true;
+
+        const body = this.player.body;
+        const standWidth = this.standHitbox.width * scaleX;
+        const rectX = body.center.x - standWidth / 2;
+        const rectY = body.top - extraHeight;
+
+        const bodies = this.physics.overlapRect(
+            rectX,
+            rectY,
+            standWidth,
+            extraHeight,
+            true,
+            true
+        );
+
+        for (const other of bodies) {
+            if (!other || other === body) continue;
+            return false;
+        }
+
+        return true;
     }
 
     updateCoyoteTimer(delta) {
@@ -244,9 +274,10 @@ export class Game extends Scene {
         if (down) this.enterCrouch();
         else this.exitCrouch();
 
-        const speed = down ? 100 : 200;
+        const crouching = this.isCrouching;
+        const speed = crouching ? 100 : 200;
 
-        if (down) {
+        if (crouching) {
             this.player.setVelocityX(0);
 
             if (left) {
