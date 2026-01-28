@@ -1,3 +1,19 @@
+const WORLD_CONFIG = {
+    clouds: {
+        keys: ['cloud1', 'cloud2', 'cloud3'],
+        quantity: 20,
+        minY: 60,
+        maxY: 220,
+        speed: 60
+    },
+    ground: {
+        height: 70
+    },
+    animation: {
+        maxDeltaMs: 33
+    }
+};
+
 export class World {
 
     constructor(scene, worldWidth, worldHeight) {
@@ -37,23 +53,23 @@ export class World {
     #createClouds() {
         this.clouds = [];
 
-        const cloudKeys = ['cloud1', 'cloud2', 'cloud3'];
-        const quantity = 20;
+        const cloudKeys = WORLD_CONFIG.clouds.keys;
+        const quantity = WORLD_CONFIG.clouds.quantity;
 
         for (let i = 0; i < quantity; i++) {
             const key = Phaser.Utils.Array.GetRandom(cloudKeys);
             const cloud = this.scene.add.image(
                 Phaser.Math.Between(0, this.worldWidth),
-                Phaser.Math.Between(60, 220),
+                Phaser.Math.Between(WORLD_CONFIG.clouds.minY, WORLD_CONFIG.clouds.maxY),
                 key
             );
 
-            this.clouds.push({ cloud, speed: 60 });
+            this.clouds.push({ cloud, speed: WORLD_CONFIG.clouds.speed });
         }
     }
 
     #createGround(holes = []) {
-        const groundHeight = 70;
+        const groundHeight = WORLD_CONFIG.ground.height;
         const groundY = this.worldHeight - groundHeight / 2;
 
         this.groundSegments = this.scene.physics.add.staticGroup();
@@ -118,7 +134,7 @@ export class World {
     animate(delta) {
         if (!this.clouds || this.clouds.length === 0) return;
 
-        const dt = Math.min(delta, 33) / 1000;
+        const dt = Math.min(delta, WORLD_CONFIG.animation.maxDeltaMs) / 1000;
 
         for (const item of this.clouds) {
             const cloud = item.cloud;
@@ -127,7 +143,7 @@ export class World {
             const half = cloud.displayWidth / 2;
             if (cloud.x < -half) {
                 cloud.x = this.worldWidth + half;
-                cloud.y = Phaser.Math.Between(60, 220);
+                cloud.y = Phaser.Math.Between(WORLD_CONFIG.clouds.minY, WORLD_CONFIG.clouds.maxY);
             }
         }
     }

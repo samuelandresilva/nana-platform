@@ -28,17 +28,17 @@ export class Game extends Scene {
             obstacles: this.defineObstacles()
         });
 
-        this.player = Player.create(this, {
+        this.playerController = Player.create(this, {
             groundSegments: this.world.groundSegments,
             shouldCollideWithGround: this.shouldCollideWithGround,
             shouldCollideContext: this
         });
-        this.character = this.player.character;
+        this.player = this.playerController.player;
 
         this.configureCamera();
         this.createDeathZone();
 
-        this.physics.add.collider(this.character, this.world.obstacles);
+        this.physics.add.collider(this.player, this.world.obstacles);
 
     }
 
@@ -67,11 +67,11 @@ export class Game extends Scene {
 
     update(time, delta) {
         this.world.animate(delta);
-        this.player.updatePlayer(delta);
+        this.playerController.updatePlayer(delta);
     }
 
     isOverHole(x) {
-        return this.world.isOverHole(x, this.groundHoleRanges);
+        return this.world.isOverHole(x, this.world.groundHoleRanges);
     }
 
     shouldCollideWithGround(player) {
@@ -81,7 +81,7 @@ export class Game extends Scene {
     configureCamera() {
         this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
         this.cameras.main.setDeadzone(300, 200);
-        this.cameras.main.startFollow(this.character, true, 0.08, 0.08);
+        this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     }
 
     createDeathZone() {
@@ -98,7 +98,7 @@ export class Game extends Scene {
         );
 
         this.physics.add.existing(this.deathZone, true);
-        this.physics.add.overlap(this.character, this.deathZone, this.restartLevel, null, this);
+        this.physics.add.overlap(this.player, this.deathZone, this.restartLevel, null, this);
     }
 
     restartLevel() {
