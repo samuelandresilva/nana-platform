@@ -157,12 +157,16 @@ export class Game extends Scene {
         const groundY = this.worldHeight - groundHeight / 2;
 
         this.groundSegments = this.physics.add.staticGroup();
-        this.groundHoles = [
-            { x: 1080, width: 160 },
-            { x: 1580, width: 160 }
-        ];
+        this.groundHoles = [];
+        this.addGroundHole(1080, 150);
+        this.addGroundHole(1580, 150);
+        this.addGroundHole(2180, 150);
 
         this.createGroundSegments(groundHeight, groundY, this.groundHoles);
+    }
+
+    addGroundHole(x, width) {
+        this.groundHoles.push({ x, width });
     }
 
     createGroundSegments(groundHeight, groundY, holes) {
@@ -173,6 +177,8 @@ export class Game extends Scene {
             }))
             .filter((hole) => hole.end > hole.start)
             .sort((a, b) => a.start - b.start);
+
+        this.groundHoleRanges = ranges;
 
         let cursor = 0;
 
@@ -206,8 +212,14 @@ export class Game extends Scene {
 
         this.addObstacle(600, 550, 350, 40);
         this.addObstacle(950, 420, 100, 40);
-        this.addObstacle(1350, 400, 180, 40);
+        this.addObstacle(1350, 300, 180, 40);
         this.addObstacle(1400, 540, 140, 40);
+        this.addObstacle(1600, 420, 140, 40);
+        this.addObstacle(1800, 550, 140, 40);
+        this.addObstacle(2350, 420, 100, 40);
+        this.addObstacle(2500, 550, 140, 40);
+        this.addObstacle(2800, 550, 80, 40);
+        this.addObstacle(3000, 600, 140, 40);
     }
 
     addObstacle(x, y, width, height) {
@@ -226,7 +238,13 @@ export class Game extends Scene {
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(900);
 
-        this.physics.add.collider(this.player, this.groundSegments);
+        this.physics.add.collider(
+            this.player,
+            this.groundSegments,
+            null,
+            this.shouldCollideWithGround,
+            this
+        );
 
         this.standHitbox = {
             width: this.player.width * 0.6,
@@ -301,6 +319,20 @@ export class Game extends Scene {
         } else {
             this.coyoteTimerMs = Math.max(0, this.coyoteTimerMs - delta);
         }
+    }
+
+    isOverHole(x) {
+        if (!this.groundHoleRanges) return false;
+
+        for (const hole of this.groundHoleRanges) {
+            if (x >= hole.start && x <= hole.end) return true;
+        }
+
+        return false;
+    }
+
+    shouldCollideWithGround(player) {
+        return !this.isOverHole(player.body.center.x);
     }
 
     updatePlayerMovement() {
