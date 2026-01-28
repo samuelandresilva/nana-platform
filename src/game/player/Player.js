@@ -230,8 +230,16 @@ export class Player {
         const right = cursors.right.isDown;
         const onGround = player.body.blocked.down;
 
-        if (down) this.#enterCrouch(this.state);
-        else this.#exitCrouch(this.scene, this.state);
+        if (!onGround) {
+            if (this.state.isCrouching) {
+                this.state.isCrouching = false;
+                this.#applyHitbox(player, this.state.standHitbox);
+            }
+        } else if (down) {
+            this.#enterCrouch(this.state);
+        } else {
+            this.#exitCrouch(this.scene, this.state);
+        }
 
         const crouching = this.state.isCrouching;
         const speed = crouching
