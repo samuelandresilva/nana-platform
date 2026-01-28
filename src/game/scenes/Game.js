@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import * as Environment from '../world/Environment';
 
 export class Game extends Scene {
 
@@ -108,104 +109,40 @@ export class Game extends Scene {
     }
 
     createSky() {
-        this.add.tileSprite(
-            this.worldWidth / 2,
-            this.worldHeight / 2,
-            this.worldWidth,
-            this.worldHeight,
-            'sky'
-        );
+        Environment.createSky(this, this.worldWidth, this.worldHeight);
     }
 
     createClouds() {
-        this.cloudKeys = ['cloud1', 'cloud2', 'cloud3'];
-        this.clouds = [];
-
-        for (let i = 0; i < 20; i++) {
-            const key = Phaser.Utils.Array.GetRandom(this.cloudKeys);
-            const cloud = this.add.image(
-                Phaser.Math.Between(0, this.worldWidth),
-                Phaser.Math.Between(60, 220),
-                key
-            );
-
-            this.clouds.push({ cloud, speed: 60 });
-        }
+        this.clouds = Environment.createClouds(this, this.worldWidth);
     }
 
     animateClouds(delta) {
-        const dt = Math.min(delta, 33) / 1000;
-
-        for (const item of this.clouds) {
-            const cloud = item.cloud;
-            cloud.x -= item.speed * dt;
-
-            const half = cloud.displayWidth / 2;
-            if (cloud.x < -half) {
-                cloud.x = this.worldWidth + half;
-                cloud.y = Phaser.Math.Between(60, 220);
-            }
-        }
+        Environment.animateClouds(this.clouds, this.worldWidth, delta);
     }
 
     createGround() {
-        const groundHeight = 70;
-        const groundY = this.worldHeight - groundHeight / 2;
-
-        this.groundSegments = this.physics.add.staticGroup();
         this.groundHoles = [];
         this.addGroundHole(1080, 150);
         this.addGroundHole(1580, 150);
         this.addGroundHole(2180, 150);
 
-        this.createGroundSegments(groundHeight, groundY, this.groundHoles);
+        const { groundSegments, groundHoleRanges } = Environment.createGround(
+            this,
+            this.worldWidth,
+            this.worldHeight,
+            this.groundHoles
+        );
+
+        this.groundSegments = groundSegments;
+        this.groundHoleRanges = groundHoleRanges;
     }
 
     addGroundHole(x, width) {
         this.groundHoles.push({ x, width });
     }
 
-    createGroundSegments(groundHeight, groundY, holes) {
-        const ranges = holes
-            .map((hole) => ({
-                start: Math.max(0, hole.x - hole.width / 2),
-                end: Math.min(this.worldWidth, hole.x + hole.width / 2)
-            }))
-            .filter((hole) => hole.end > hole.start)
-            .sort((a, b) => a.start - b.start);
-
-        this.groundHoleRanges = ranges;
-
-        let cursor = 0;
-
-        for (const hole of ranges) {
-            const width = hole.start - cursor;
-
-            if (width > 0) {
-                this.addGroundSegment(cursor + width / 2, groundY, width, groundHeight);
-            }
-
-            cursor = Math.max(cursor, hole.end);
-        }
-
-        const tailWidth = this.worldWidth - cursor;
-
-        if (tailWidth > 0) {
-            this.addGroundSegment(cursor + tailWidth / 2, groundY, tailWidth, groundHeight);
-        }
-    }
-
-    addGroundSegment(x, y, width, height) {
-        const body = this.add.rectangle(x, y, width, height, 0x000000, 0);
-        this.physics.add.existing(body, true);
-        this.groundSegments.add(body);
-
-        this.add.tileSprite(x, y, width, height, 'ground');
-    }
-
     createObstacles() {
-        this.obstacles = this.physics.add.staticGroup();
-
+        this.obstacleDefs = [];
         this.addObstacle(600, 550, 350, 40);
         this.addObstacle(950, 420, 100, 40);
         this.addObstacle(1350, 300, 180, 40);
@@ -216,14 +153,12 @@ export class Game extends Scene {
         this.addObstacle(2500, 550, 140, 40);
         this.addObstacle(2800, 550, 80, 40);
         this.addObstacle(3000, 600, 140, 40);
+
+        this.obstacles = Environment.createObstacles(this, this.obstacleDefs);
     }
 
     addObstacle(x, y, width, height) {
-        const body = this.add.rectangle(x, y, width, height, 0x000000, 0);
-        this.physics.add.existing(body, true);
-        this.obstacles.add(body);
-
-        this.add.tileSprite(x, y, width, height, 'block').setDepth(10);
+        this.obstacleDefs.push({ x, y, width, height });
     }
 
     createPlayer() {
@@ -318,13 +253,7 @@ export class Game extends Scene {
     }
 
     isOverHole(x) {
-        if (!this.groundHoleRanges) return false;
-
-        for (const hole of this.groundHoleRanges) {
-            if (x >= hole.start && x <= hole.end) return true;
-        }
-
-        return false;
+        return Environment.isOverHole(x, this.groundHoleRanges);
     }
 
     shouldCollideWithGround(player) {
