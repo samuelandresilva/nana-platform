@@ -192,13 +192,22 @@ export class Player {
             crouchHitbox,
             isCrouching: false,
             coyoteTimerMs: 0,
-            cursors: scene.input.keyboard.createCursorKeys()
+            cursors: null
         };
 
         this.#applyHitbox(player, standHitbox);
         player.play('idle');
 
         this.player = player;
+    }
+
+    setInput(cursors) {
+        if (!this.state) {
+            this.state = { cursors };
+            return;
+        }
+
+        this.state.cursors = cursors;
     }
 
     #applyHitbox(player, cfg) {
@@ -215,6 +224,7 @@ export class Player {
 
     #updatePlayerMovement() {
         const { player, cursors } = this.state;
+        if (!cursors) return;
         const down = cursors.down.isDown;
         const left = cursors.left.isDown;
         const right = cursors.right.isDown;

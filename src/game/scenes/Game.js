@@ -33,12 +33,12 @@ export class Game extends Scene {
             shouldCollideContext: this
         });
         this.player = this.playerController.player;
+        this.playerController.setInput(this.input.keyboard.createCursorKeys());
 
         this.configureCamera();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
-
     }
 
     update(time, delta) {
