@@ -12,6 +12,7 @@ export class Game extends Scene {
     preload() {
         World.preloadAssets(this);
         Player.preloadAssets(this);
+        this.load.audio('bgm_main', 'assets/audio/music/bgm_main.m4a');
     }
 
     create() {
@@ -35,6 +36,7 @@ export class Game extends Scene {
         this.player = this.playerController.player;
         this.playerController.setInput(this.input.keyboard.createCursorKeys());
 
+        this.createBackgroundMusic();
         this.configureCamera();
         this.createDeathZone();
 
@@ -44,6 +46,12 @@ export class Game extends Scene {
     update(time, delta) {
         this.world.animate(delta);
         this.playerController.updatePlayer(delta);
+    }
+
+    createBackgroundMusic() {
+        this.sound.stopByKey('bgm_main');
+        this.bgm = this.sound.add('bgm_main', { loop: true, volume: 0.3 });
+        this.bgm.play();
     }
 
     isOverHole(x) {
