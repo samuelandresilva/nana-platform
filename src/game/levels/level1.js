@@ -22,5 +22,8 @@ export const LEVEL_1 = {
         { x: 1350, y: 230 },
         { x: 1800, y: 480 },
         { x: 2500, y: 480 }
+    ],
+    enemies: [
+        { x: 1330, y: 650, patrolDistance: 140, speed: 90 }
     ]
 };

@@ -3,6 +3,7 @@ import { Player } from '../player/Player';
 import { World } from '../world/World';
 import { LEVEL_1 } from '../levels/level1';
 import { Collectibles } from '../items/Collectibles';
+import { Enemies } from '../enemies/Enemies';
 
 export class Game extends Scene {
 
@@ -14,6 +15,7 @@ export class Game extends Scene {
         World.preloadAssets(this);
         Player.preloadAssets(this);
         Collectibles.preloadAssets(this);
+        Enemies.preloadAssets(this);
         this.load.audio('bgm_main', 'assets/audio/music/bgm_main.m4a');
         this.load.audio('sfx_game_over', 'assets/audio/sfx/game_over.mp3');
         this.load.audio('sfx_esa', 'assets/audio/sfx/esa.mp3');
@@ -49,6 +51,10 @@ export class Game extends Scene {
             positions: LEVEL_1.collectibles
         });
 
+        this.enemies = new Enemies(this).setup({
+            enemies: LEVEL_1.enemies
+        });
+
         this.createBackgroundMusic();
         this.configureCamera();
         this.createHud();
@@ -62,11 +68,20 @@ export class Game extends Scene {
             null,
             this
         );
+
+        this.physics.add.overlap(
+            this.player,
+            this.enemies.group,
+            this.handleEnemyHit,
+            null,
+            this
+        );
     }
 
     update(time, delta) {
         this.world.animate(delta);
         this.playerController.updatePlayer(delta);
+        this.enemies.update();
     }
 
     createBackgroundMusic() {
@@ -80,7 +95,7 @@ export class Game extends Scene {
     }
 
     shouldCollideWithGround(player) {
-        return !this.isOverHole(player.body.center.x);
+        return !this.isGameOver && !this.isOverHole(player.body.center.x);
     }
 
     configureCamera() {
@@ -134,6 +149,10 @@ export class Game extends Scene {
         this.collectedItems += 1;
         this.sound.play('sfx_sucky');
         this.updateHud();
+    }
+
+    handleEnemyHit() {
+        this.handleGameOver();
     }
 
     createHud() {
