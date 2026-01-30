@@ -28,6 +28,8 @@ export class World {
         scene.load.image('cloud2', 'assets/tiles/cloud2.png');
         scene.load.image('cloud3', 'assets/tiles/cloud3.png');
         scene.load.image('ground', 'assets/tiles/ground.png');
+        scene.load.image('ground_cliff_left', 'assets/tiles/ground_cliff_left.png');
+        scene.load.image('ground_cliff_right', 'assets/tiles/ground_cliff_right.png');
         scene.load.image('block', 'assets/tiles/block.png');
     }
 
@@ -74,17 +76,31 @@ export class World {
     #createGround(holes = []) {
         const groundHeight = WORLD_CONFIG.ground.height;
         const groundY = this.worldHeight - groundHeight / 2;
+        const tileWidth = this.#getScaledTileWidth('ground', groundHeight);
 
         this.groundSegments = this.scene.physics.add.staticGroup();
         this.groundHoleRanges = this.#buildGroundHoleRanges(this.worldWidth, holes);
 
         let cursor = 0;
 
-        for (const hole of this.groundHoleRanges) {
-            const width = hole.start - cursor;
+        const holeRanges = this.groundHoleRanges;
 
-            if (width > 0) {
-                this.#addGroundSegment(this.scene, this.groundSegments, cursor + width / 2, groundY, width, groundHeight);
+        for (let i = 0; i < holeRanges.length; i += 1) {
+            const hole = holeRanges[i];
+            const segmentStart = cursor;
+            const segmentEnd = hole.start;
+
+            if (segmentEnd > segmentStart) {
+                const hasLeftHole = cursor > 0;
+                this.#addGroundSegment(
+                    segmentStart,
+                    segmentEnd,
+                    groundY,
+                    groundHeight,
+                    tileWidth,
+                    hasLeftHole,
+                    true
+                );
             }
 
             cursor = Math.max(cursor, hole.end);
@@ -93,7 +109,18 @@ export class World {
         const tailWidth = this.worldWidth - cursor;
 
         if (tailWidth > 0) {
-            this.#addGroundSegment(this.scene, this.groundSegments, cursor + tailWidth / 2, groundY, tailWidth, groundHeight);
+            const segmentStart = cursor;
+            const segmentEnd = this.worldWidth;
+            const hasLeftHole = holeRanges.length > 0;
+            this.#addGroundSegment(
+                segmentStart,
+                segmentEnd,
+                groundY,
+                groundHeight,
+                tileWidth,
+                hasLeftHole,
+                false
+            );
         }
     }
 
@@ -109,12 +136,46 @@ export class World {
             .sort((a, b) => a.start - b.start);
     }
 
-    #addGroundSegment(scene, group, x, y, width, height) {
-        const body = scene.add.rectangle(x, y, width, height, 0x000000, 0);
-        scene.physics.add.existing(body, true);
-        group.add(body);
+    #addGroundSegment(startX, endX, y, height, tileWidth, addLeftCliff, addRightCliff) {
+        const width = endX - startX;
+        const body = this.scene.add.rectangle(startX + width / 2, y, width, height, 0x000000, 0);
+        this.scene.physics.add.existing(body, true);
+        this.groundSegments.add(body);
 
-        scene.add.tileSprite(x, y, width, height, 'ground');
+        let visualStart = startX;
+        let visualEnd = endX;
+
+        if (addLeftCliff) {
+            this.#addGroundCliff(visualStart + tileWidth / 2, y, 'ground_cliff_left', height);
+            visualStart += tileWidth;
+        }
+
+        if (addRightCliff) {
+            this.#addGroundCliff(visualEnd - tileWidth / 2, y, 'ground_cliff_right', height);
+            visualEnd -= tileWidth;
+        }
+
+        const visualWidth = visualEnd - visualStart;
+        if (visualWidth > 0) {
+            this.scene.add.tileSprite(visualStart + visualWidth / 2, y, visualWidth, height, 'ground');
+        }
+    }
+
+    #addGroundCliff(x, y, key, groundHeight) {
+        const sprite = this.scene.add.image(x, y, key);
+        const baseHeight = sprite.height || groundHeight;
+        const scale = groundHeight / baseHeight;
+        sprite.setScale(scale);
+        sprite.setDepth(2);
+    }
+
+    #getScaledTileWidth(key, groundHeight) {
+        const texture = this.scene.textures.get(key);
+        const source = texture?.getSourceImage?.();
+        const baseWidth = source?.width ?? groundHeight;
+        const baseHeight = source?.height ?? groundHeight;
+        const scale = groundHeight / baseHeight;
+        return baseWidth * scale;
     }
 
     #createObstacles(obstacles = []) {
