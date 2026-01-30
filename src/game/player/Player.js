@@ -1,6 +1,6 @@
 const PLAYER_CONFIG = {
     spawn: {
-        x: 3000,
+        x: 100,
         y: 100
     },
     assets: {
