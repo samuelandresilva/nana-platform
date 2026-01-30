@@ -27,7 +27,7 @@ export class Game extends Scene {
         this.isGameOver = false;
         this.collectedItems = 0;
         this.totalCollectibles = LEVEL_1.collectibles?.length ?? 0;
-        this.worldWidth = this.scale.width * 3;
+        this.worldWidth = this.scale.width * 3.5;
         this.worldHeight = this.scale.height;
         this.fallLimit = 300;
         this.worldBoundsHeight = this.worldHeight + this.fallLimit;
@@ -58,6 +58,7 @@ export class Game extends Scene {
         this.createBackgroundMusic();
         this.configureCamera();
         this.createHud();
+        this.createDebugHud();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
@@ -82,6 +83,7 @@ export class Game extends Scene {
         this.world.animate(delta);
         this.playerController.updatePlayer(delta);
         this.enemies.update();
+        this.updateDebugHud();
     }
 
     createBackgroundMusic() {
@@ -190,5 +192,26 @@ export class Game extends Scene {
 
     getCollectibleText() {
         return `${this.collectedItems}/${this.totalCollectibles}`;
+    }
+
+    createDebugHud() {
+        const style = {
+            fontFamily: 'Arial',
+            fontSize: '18px',
+            color: '#ffffaa',
+            stroke: '#000000',
+            strokeThickness: 3
+        };
+
+        this.debugText = this.add.text(16, 56, '', style);
+        this.debugText.setScrollFactor(0);
+        this.debugText.setDepth(1000);
+    }
+
+    updateDebugHud() {
+        if (!this.debugText || !this.player) return;
+        const x = Math.round(this.player.x);
+        const y = Math.round(this.player.y);
+        this.debugText.setText(`X:${x} Y:${y}`);
     }
 }
