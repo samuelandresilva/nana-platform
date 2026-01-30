@@ -24,6 +24,7 @@ export class Game extends Scene {
     create() {
         this.isGameOver = false;
         this.collectedItems = 0;
+        this.totalCollectibles = LEVEL_1.collectibles?.length ?? 0;
         this.worldWidth = this.scale.width * 3;
         this.worldHeight = this.scale.height;
         this.fallLimit = 300;
@@ -50,6 +51,7 @@ export class Game extends Scene {
 
         this.createBackgroundMusic();
         this.configureCamera();
+        this.createHud();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
@@ -131,5 +133,43 @@ export class Game extends Scene {
         collectible.disableBody(true, true);
         this.collectedItems += 1;
         this.sound.play('sfx_sucky');
+        this.updateHud();
+    }
+
+    createHud() {
+        const style = {
+            fontFamily: 'Arial',
+            fontSize: '24px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 4
+        };
+
+        const hudX = 16;
+        const hudY = 16;
+        const iconScale = 0.06;
+
+        this.collectibleIcon = this.add.image(hudX, hudY, 'pacifier');
+        this.collectibleIcon.setOrigin(0, 0);
+        this.collectibleIcon.setScale(iconScale);
+        this.collectibleIcon.setScrollFactor(0);
+        this.collectibleIcon.setDepth(1000);
+
+        const textX = hudX + this.collectibleIcon.displayWidth + 8;
+        const textY = hudY + this.collectibleIcon.displayHeight / 2;
+
+        this.collectibleText = this.add.text(textX, textY, this.getCollectibleText(), style);
+        this.collectibleText.setOrigin(0, 0.5);
+        this.collectibleText.setScrollFactor(0);
+        this.collectibleText.setDepth(1000);
+    }
+
+    updateHud() {
+        if (!this.collectibleText) return;
+        this.collectibleText.setText(this.getCollectibleText());
+    }
+
+    getCollectibleText() {
+        return `${this.collectedItems}/${this.totalCollectibles}`;
     }
 }
