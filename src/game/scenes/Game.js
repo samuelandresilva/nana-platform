@@ -18,6 +18,7 @@ export class Game extends Scene {
         this.load.audio('sfx_game_over', 'assets/audio/sfx/game_over.mp3');
         this.load.audio('sfx_esa', 'assets/audio/sfx/esa.mp3');
         this.load.audio('sfx_coin', 'assets/audio/sfx/coin.mp3');
+        this.load.audio('sfx_sucky', 'assets/audio/sfx/sucky.mp3');
     }
 
     create() {
@@ -129,6 +130,6 @@ export class Game extends Scene {
 
         collectible.disableBody(true, true);
         this.collectedItems += 1;
-        this.sound.play('sfx_coin');
+        this.sound.play('sfx_sucky');
     }
 }
