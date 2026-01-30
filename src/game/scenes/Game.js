@@ -21,10 +21,14 @@ export class Game extends Scene {
         this.load.audio('sfx_esa', 'assets/audio/sfx/esa.mp3');
         this.load.audio('sfx_coin', 'assets/audio/sfx/coin.mp3');
         this.load.audio('sfx_sucky', 'assets/audio/sfx/sucky.mp3');
+        this.load.audio('sfx_win', 'assets/audio/sfx/win.mp3');
+        this.load.image('flag', 'assets/tiles/flag.png');
+        this.load.image('flag2', 'assets/tiles/flag2.png');
     }
 
     create() {
         this.isGameOver = false;
+        this.isWin = false;
         this.collectedItems = 0;
         this.totalCollectibles = LEVEL_1.collectibles?.length ?? 0;
         this.worldWidth = this.scale.width * 3.5;
@@ -59,6 +63,7 @@ export class Game extends Scene {
         this.configureCamera();
         this.createHud();
         this.createDebugHud();
+        this.createFlag();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
@@ -74,6 +79,14 @@ export class Game extends Scene {
             this.player,
             this.enemies.group,
             this.handleEnemyHit,
+            null,
+            this
+        );
+
+        this.physics.add.overlap(
+            this.player,
+            this.goalFlag,
+            this.handleGoalHit,
             null,
             this
         );
@@ -155,6 +168,70 @@ export class Game extends Scene {
 
     handleEnemyHit() {
         this.handleGameOver();
+    }
+
+    createFlag() {
+        this.createFlagAnimation();
+
+        const flagX = this.worldWidth - 120;
+        const flagY = this.world.groundTopY ?? (this.worldHeight - 70);
+
+        this.goalFlag = this.physics.add.staticSprite(flagX, flagY, 'flag');
+        this.goalFlag.setOrigin(0.5, 1);
+        this.goalFlag.setDepth(20);
+        this.goalFlag.play('flag_wave');
+        this.goalFlag.refreshBody();
+    }
+
+    createFlagAnimation() {
+        if (this.anims.exists('flag_wave')) return;
+
+        this.anims.create({
+            key: 'flag_wave',
+            frames: [
+                { key: 'flag' },
+                { key: 'flag2' }
+            ],
+            frameRate: 2,
+            repeat: -1
+        });
+    }
+
+    handleGoalHit() {
+        if (this.isWin || this.isGameOver) return;
+        if (this.collectedItems < this.totalCollectibles) return;
+
+        this.isWin = true;
+        if (this.bgm?.isPlaying) {
+            this.bgm.stop();
+        }
+
+        this.playerController.setInput(null);
+        this.cameras.main.stopFollow();
+
+        if (this.player?.body) {
+            this.player.setVelocity(0, 0);
+            this.player.body.setAllowGravity(false);
+            this.player.body.checkCollision.none = true;
+        }
+        this.player.setCollideWorldBounds(false);
+
+        this.player.play('walk', true);
+
+        const camera = this.cameras.main;
+        const exitX = camera.scrollX + camera.width + this.player.displayWidth;
+
+        this.tweens.add({
+            targets: this.player,
+            x: exitX,
+            duration: 3000,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.sound.play('sfx_win');
+        this.time.delayedCall(4000, () => {
+            this.scene.start('Menu');
+        });
     }
 
     createHud() {

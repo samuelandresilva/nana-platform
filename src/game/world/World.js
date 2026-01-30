@@ -76,6 +76,9 @@ export class World {
     #createGround(holes = []) {
         const groundHeight = WORLD_CONFIG.ground.height;
         const groundY = this.worldHeight - groundHeight / 2;
+        this.groundHeight = groundHeight;
+        this.groundTopY = this.worldHeight - groundHeight;
+        this.groundCenterY = groundY;
         const tileWidth = this.#getScaledTileWidth('ground', groundHeight);
 
         this.groundSegments = this.scene.physics.add.staticGroup();
