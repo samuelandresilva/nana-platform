@@ -24,6 +24,8 @@ export class Game extends Scene {
         this.load.audio('sfx_win', 'assets/audio/sfx/win.mp3');
         this.load.image('flag', 'assets/tiles/flag.png');
         this.load.image('flag2', 'assets/tiles/flag2.png');
+        this.load.image('olaf', 'assets/tiles/Olaf.png');
+        this.load.image('dialog', 'assets/tiles/dialog.png');
     }
 
     create() {
@@ -63,7 +65,9 @@ export class Game extends Scene {
         this.configureCamera();
         this.createHud();
         this.createDebugHud();
+        this.createGoalFeedback();
         this.createFlag();
+        this.createOlaf();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
@@ -96,6 +100,7 @@ export class Game extends Scene {
         this.world.animate(delta);
         this.playerController.updatePlayer(delta);
         this.enemies.update();
+        this.updateFlagProximity();
         this.updateDebugHud();
     }
 
@@ -173,7 +178,7 @@ export class Game extends Scene {
     createFlag() {
         this.createFlagAnimation();
 
-        const flagX = this.worldWidth - 120;
+        const flagX = this.worldWidth - 220;
         const flagY = this.world.groundTopY ?? (this.worldHeight - 70);
 
         this.goalFlag = this.physics.add.staticSprite(flagX, flagY, 'flag');
@@ -181,6 +186,25 @@ export class Game extends Scene {
         this.goalFlag.setDepth(20);
         this.goalFlag.play('flag_wave');
         this.goalFlag.refreshBody();
+    }
+
+    createOlaf() {
+        const flagX = this.worldWidth - 220;
+        const flagY = this.world.groundTopY ?? (this.worldHeight - 70);
+        const olafX = flagX + 140;
+        const olafY = flagY + 10;
+
+        this.olaf = this.add.image(olafX, olafY, 'olaf');
+        this.olaf.setOrigin(0.5, 1);
+        this.olaf.setScale(0.5);
+        this.olaf.setDepth(19);
+
+        this.dialog = this.add.image(olafX - 20, olafY, 'dialog');
+        this.dialog.setOrigin(0.5, 1);
+        this.dialog.setScale(0.4);
+        this.dialog.setDepth(20);
+        this.dialog.y = this.olaf.y - this.olaf.displayHeight - 10;
+        this.dialog.setVisible(false);
     }
 
     createFlagAnimation() {
@@ -199,7 +223,10 @@ export class Game extends Scene {
 
     handleGoalHit() {
         if (this.isWin || this.isGameOver) return;
-        if (this.collectedItems < this.totalCollectibles) return;
+        if (this.collectedItems < this.totalCollectibles) {
+            this.showGoalFeedback();
+            return;
+        }
 
         this.isWin = true;
         if (this.bgm?.isPlaying) {
@@ -290,5 +317,51 @@ export class Game extends Scene {
         const x = Math.round(this.player.x);
         const y = Math.round(this.player.y);
         this.debugText.setText(`X:${x} Y:${y}`);
+    }
+
+    createGoalFeedback() {
+        const style = {
+            fontFamily: 'Arial',
+            fontSize: '26px',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 5
+        };
+
+        this.goalFeedbackText = this.add.text(
+            this.scale.width / 2,
+            100,
+            'Você não pegou todas as Tus',
+            style
+        );
+        this.goalFeedbackText.setOrigin(0.5, 0.5);
+        this.goalFeedbackText.setScrollFactor(0);
+        this.goalFeedbackText.setDepth(1000);
+        this.goalFeedbackText.setVisible(false);
+    }
+
+    showGoalFeedback() {
+        if (!this.goalFeedbackText) return;
+        this.goalFeedbackText.setVisible(true);
+        this.goalFeedbackText.alpha = 1;
+        this.goalFeedbackText.setText('Você não pegou todas as Tus');
+
+        this.tweens.killTweensOf(this.goalFeedbackText);
+        this.time.delayedCall(1500, () => {
+            this.tweens.add({
+                targets: this.goalFeedbackText,
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    this.goalFeedbackText.setVisible(false);
+                }
+            });
+        });
+    }
+
+    updateFlagProximity() {
+        if (!this.dialog || !this.player || !this.goalFlag) return;
+        const isAtFlag = this.physics.overlap(this.player, this.goalFlag);
+        this.dialog.setVisible(isAtFlag);
     }
 }
