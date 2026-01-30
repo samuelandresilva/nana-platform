@@ -265,27 +265,31 @@ export class Player {
             return;
         }
 
+        let jumped = false;
         if (Phaser.Input.Keyboard.JustDown(cursors.up) && this.state.coyoteTimerMs > 0) {
             player.setVelocityY(PLAYER_CONFIG.movement.jumpVelocity);
             player.play('jump', true);
             this.scene.sound.play('sfx_jump');
             this.state.coyoteTimerMs = 0;
-            return;
+            jumped = true;
         }
 
-        if (!onGround) {
+        if (left) {
+            player.setVelocityX(-speed);
+            player.setFlipX(true);
+        } else if (right) {
+            player.setVelocityX(speed);
+            player.setFlipX(false);
+        } else if (onGround) {
+            player.setVelocityX(0);
+        }
+
+        if (!onGround || jumped) {
             player.play('jump', true);
             return;
         }
 
-        player.setVelocityX(0);
-        if (left) {
-            player.setVelocityX(-speed);
-            player.setFlipX(true);
-            player.play('walk', true);
-        } else if (right) {
-            player.setVelocityX(speed);
-            player.setFlipX(false);
+        if (left || right) {
             player.play('walk', true);
         } else {
             player.play('idle', true);
