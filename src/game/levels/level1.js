@@ -20,10 +20,10 @@ export const LEVEL_1 = {
     ],
     collectibles: [
         { x: 600, y: 480 },
-        { x: 950, y: 350 },
         { x: 1350, y: 230 },
-        { x: 1800, y: 480 },
-        { x: 2180, y: 180 }
+        { x: 1800, y: 610 },
+        { x: 2180, y: 180 },
+        { x: 3200, y: 180 }
     ],
     enemies: [
         { x: 1350, y: 650, patrolDistance: 140, speed: 90 },
