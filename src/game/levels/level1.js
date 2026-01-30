@@ -15,5 +15,12 @@ export const LEVEL_1 = {
         { x: 2500, y: 550, width: 140, height: 40 },
         { x: 2800, y: 550, width: 80, height: 40 },
         { x: 3000, y: 600, width: 140, height: 40 }
+    ],
+    collectibles: [
+        { x: 600, y: 480 },
+        { x: 950, y: 350 },
+        { x: 1350, y: 230 },
+        { x: 1800, y: 480 },
+        { x: 2500, y: 480 }
     ]
 };

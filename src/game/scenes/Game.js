@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { Player } from '../player/Player';
 import { World } from '../world/World';
 import { LEVEL_1 } from '../levels/level1';
+import { Collectibles } from '../items/Collectibles';
 
 export class Game extends Scene {
 
@@ -12,13 +13,16 @@ export class Game extends Scene {
     preload() {
         World.preloadAssets(this);
         Player.preloadAssets(this);
+        Collectibles.preloadAssets(this);
         this.load.audio('bgm_main', 'assets/audio/music/bgm_main.m4a');
         this.load.audio('sfx_game_over', 'assets/audio/sfx/game_over.mp3');
         this.load.audio('sfx_esa', 'assets/audio/sfx/esa.mp3');
+        this.load.audio('sfx_coin', 'assets/audio/sfx/coin.mp3');
     }
 
     create() {
         this.isGameOver = false;
+        this.collectedItems = 0;
         this.worldWidth = this.scale.width * 3;
         this.worldHeight = this.scale.height;
         this.fallLimit = 300;
@@ -39,11 +43,22 @@ export class Game extends Scene {
         this.player = this.playerController.player;
         this.playerController.setInput(this.input.keyboard.createCursorKeys());
 
+        this.collectibles = new Collectibles(this).setup({
+            positions: LEVEL_1.collectibles
+        });
+
         this.createBackgroundMusic();
         this.configureCamera();
         this.createDeathZone();
 
         this.physics.add.collider(this.player, this.world.obstacles);
+        this.physics.add.overlap(
+            this.player,
+            this.collectibles.group,
+            this.handleCollectiblePickup,
+            null,
+            this
+        );
     }
 
     update(time, delta) {
@@ -53,7 +68,7 @@ export class Game extends Scene {
 
     createBackgroundMusic() {
         this.sound.stopByKey('bgm_main');
-        this.bgm = this.sound.add('bgm_main', { loop: true, volume: 0.3 });
+        this.bgm = this.sound.add('bgm_main', { loop: true, volume: 0.1 });
         this.bgm.play();
     }
 
@@ -107,5 +122,13 @@ export class Game extends Scene {
         this.time.delayedCall(2000, () => {
             this.scene.restart();
         });
+    }
+
+    handleCollectiblePickup(player, collectible) {
+        if (!collectible.active) return;
+
+        collectible.disableBody(true, true);
+        this.collectedItems += 1;
+        this.sound.play('sfx_coin');
     }
 }
