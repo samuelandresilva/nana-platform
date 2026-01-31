@@ -26,6 +26,7 @@ export class Game extends Scene {
         this.load.image('flag2', 'assets/tiles/flag2.png');
         this.load.image('olaf', 'assets/tiles/Olaf.png');
         this.load.image('dialog', 'assets/tiles/dialog.png');
+        this.load.image('dialog_win', 'assets/tiles/dialog_win.png');
     }
 
     create() {
@@ -204,6 +205,13 @@ export class Game extends Scene {
         this.dialog.setDepth(20);
         this.dialog.y = this.olaf.y - this.olaf.displayHeight - 10;
         this.dialog.setVisible(false);
+
+        this.dialogWin = this.add.image(olafX - 20, olafY, 'dialog_win');
+        this.dialogWin.setOrigin(0.5, 1);
+        this.dialogWin.setScale(0.4);
+        this.dialogWin.setDepth(21);
+        this.dialogWin.y = this.olaf.y - this.olaf.displayHeight - 10;
+        this.dialogWin.setVisible(false);
     }
 
     createFlagAnimation() {
@@ -228,6 +236,12 @@ export class Game extends Scene {
         }
 
         this.isWin = true;
+        if (this.dialog) {
+            this.dialog.setVisible(false);
+        }
+        if (this.dialogWin) {
+            this.dialogWin.setVisible(true);
+        }
         if (this.bgm?.isPlaying) {
             this.bgm.stop();
         }
@@ -343,7 +357,7 @@ export class Game extends Scene {
     }
 
     updateFlagProximity() {
-        if (!this.dialog || !this.player || !this.goalFlag) return;
+        if (this.isWin || !this.dialog || !this.player || !this.goalFlag) return;
         const isAtFlag = this.physics.overlap(this.player, this.goalFlag);
         this.dialog.setVisible(isAtFlag);
     }
