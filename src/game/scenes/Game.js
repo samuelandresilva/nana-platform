@@ -65,7 +65,6 @@ export class Game extends Scene {
         this.configureCamera();
         this.createHud();
         this.createDebugHud();
-        this.createGoalFeedback();
         this.createFlag();
         this.createOlaf();
         this.createDeathZone();
@@ -237,11 +236,16 @@ export class Game extends Scene {
         this.cameras.main.stopFollow();
 
         if (this.player?.body) {
+            const groundY = (this.world.groundTopY ?? (this.worldHeight - 70)) - 30;
             this.player.setVelocity(0, 0);
+            this.player.body.reset(this.player.x, groundY);
+            this.player.y = groundY;
+            this.player.body.updateFromGameObject();
             this.player.body.setAllowGravity(false);
             this.player.body.checkCollision.none = true;
         }
         this.player.setCollideWorldBounds(false);
+        this.player.setFlipX(false);
 
         this.player.play('walk', true);
 
@@ -317,27 +321,6 @@ export class Game extends Scene {
         const x = Math.round(this.player.x);
         const y = Math.round(this.player.y);
         this.debugText.setText(`X:${x} Y:${y}`);
-    }
-
-    createGoalFeedback() {
-        const style = {
-            fontFamily: 'Arial',
-            fontSize: '26px',
-            color: '#ffffff',
-            stroke: '#000000',
-            strokeThickness: 5
-        };
-
-        this.goalFeedbackText = this.add.text(
-            this.scale.width / 2,
-            100,
-            'Você não pegou todas as Tus',
-            style
-        );
-        this.goalFeedbackText.setOrigin(0.5, 0.5);
-        this.goalFeedbackText.setScrollFactor(0);
-        this.goalFeedbackText.setDepth(1000);
-        this.goalFeedbackText.setVisible(false);
     }
 
     showGoalFeedback() {
