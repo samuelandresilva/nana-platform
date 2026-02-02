@@ -8,8 +8,8 @@ export const LEVEL_2 = {
     ],
     obstacles: [
         { x: 500, y: 560, width: 220, height: 40 },
-        { x: 900, y: 430, width: 160, height: 40 },
-        { x: 1400, y: 320, width: 160, height: 40 },
+        { x: 800, y: 430, width: 160, height: 40 },
+        { x: 1500, y: 320, width: 160, height: 40 },
         { x: 1750, y: 520, width: 180, height: 40 },
         { x: 2300, y: 440, width: 140, height: 40 },
         { x: 2700, y: 360, width: 140, height: 40 },
