@@ -1,8 +1,8 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Visão geral
 - Projeto: **Nana Platform**, jogo de plataforma 2D feito com **Phaser 3** e **Vite**.
-- Fluxo atual: **Menu** (imagem + música) → tecla **Espaço** inicia **Game**.
+- Fluxo atual: **Menu** (imagem + música) → tecla **Espaço** inicia **Game** → ao vencer avança para o próximo nível.
 - Entrada web: `index.html` → `src/main.js` → `src/game/main.js`.
 
 ## Como rodar
@@ -18,7 +18,9 @@
 - `src/game/world/World.js`: céu, nuvens animadas, chão com buracos, obstáculos.
 - `src/game/player/Player.js`: movimento, hitbox, animações, coyote time e SFX.
 - `src/game/levels/level1.js`: dados do nível (buracos + obstáculos).
+- `src/game/levels/level2.js`: dados do nível 2 (buracos + obstáculos).
 - `public/assets/*`: sprites, tiles e áudio.
+- `public/assets/bg/level*.png`: imagens de intro por nível (overlay com fade de 2s no início de cada level).
 
 ## Controles e mecânicas
 - Setas: **←/→** andar, **↓** agachar, **↑** pular.
