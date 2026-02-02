@@ -2,13 +2,23 @@ import { Scene } from 'phaser';
 import { Player } from '../player/Player';
 import { World } from '../world/World';
 import { LEVEL_1 } from '../levels/level1';
+import { LEVEL_2 } from '../levels/level2';
 import { Collectibles } from '../items/Collectibles';
 import { Enemies } from '../enemies/Enemies';
+
+const LEVELS = [LEVEL_1, LEVEL_2];
 
 export class Game extends Scene {
 
     constructor() {
         super('Game');
+    }
+
+    init(data = {}) {
+        const index = Number.isInteger(data.level) ? data.level : 0;
+        const clampedIndex = Math.max(0, Math.min(index, LEVELS.length - 1));
+        this.levelIndex = clampedIndex;
+        this.level = LEVELS[clampedIndex];
     }
 
     preload() {
@@ -33,8 +43,9 @@ export class Game extends Scene {
         this.isGameOver = false;
         this.isWin = false;
         this.collectedItems = 0;
-        this.totalCollectibles = LEVEL_1.collectibles?.length ?? 0;
-        this.worldWidth = this.scale.width * 3.5;
+        this.totalCollectibles = this.level.collectibles?.length ?? 0;
+        const widthMultiplier = this.level.worldWidthMultiplier ?? 3.5;
+        this.worldWidth = this.scale.width * widthMultiplier;
         this.worldHeight = this.scale.height;
         this.fallLimit = 300;
         this.worldBoundsHeight = this.worldHeight + this.fallLimit;
@@ -42,8 +53,8 @@ export class Game extends Scene {
         this.physics.world.setBounds(0, 0, this.worldWidth, this.worldBoundsHeight);
 
         this.world = new World(this, this.worldWidth, this.worldHeight).setup({
-            groundHoles: LEVEL_1.groundHoles,
-            obstacles: LEVEL_1.obstacles
+            groundHoles: this.level.groundHoles,
+            obstacles: this.level.obstacles
         });
 
         this.playerController = new Player(this).setup({
@@ -55,11 +66,11 @@ export class Game extends Scene {
         this.playerController.setInput(this.input.keyboard.createCursorKeys());
 
         this.collectibles = new Collectibles(this).setup({
-            positions: LEVEL_1.collectibles
+            positions: this.level.collectibles
         });
 
         this.enemies = new Enemies(this).setup({
-            enemies: LEVEL_1.enemies
+            enemies: this.level.enemies
         });
 
         this.createBackgroundMusic();
@@ -275,7 +286,12 @@ export class Game extends Scene {
 
         this.sound.play('sfx_win');
         this.time.delayedCall(4000, () => {
-            this.scene.start('Menu');
+            const nextLevel = this.levelIndex + 1;
+            if (nextLevel < LEVELS.length) {
+                this.scene.start('Game', { level: nextLevel });
+            } else {
+                this.scene.start('Menu');
+            }
         });
     }
 
