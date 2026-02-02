@@ -37,6 +37,10 @@ export class Game extends Scene {
         this.load.image('olaf', 'assets/tiles/Olaf.png');
         this.load.image('dialog', 'assets/tiles/dialog.png');
         this.load.image('dialog_win', 'assets/tiles/dialog_win.png');
+        for (let i = 0; i < LEVELS.length; i += 1) {
+            const levelNumber = i + 1;
+            this.load.image(`level_intro_${levelNumber}`, `assets/bg/level${levelNumber}.png`);
+        }
     }
 
     create() {
@@ -80,6 +84,7 @@ export class Game extends Scene {
         this.createFlag();
         this.createOlaf();
         this.createDeathZone();
+        this.showLevelIntro();
 
         this.physics.add.collider(this.player, this.world.obstacles);
         this.physics.add.overlap(
@@ -351,6 +356,52 @@ export class Game extends Scene {
         const x = Math.round(this.player.x);
         const y = Math.round(this.player.y);
         this.debugText.setText(`X:${x} Y:${y}`);
+    }
+
+    showLevelIntro() {
+        const levelNumber = this.levelIndex + 1;
+        const introKey = `level_intro_${levelNumber}`;
+        if (!this.textures.exists(introKey)) return;
+
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+
+        this.levelIntroImage = this.add.image(centerX, centerY, introKey);
+        this.levelIntroImage.setOrigin(0.5);
+        const texture = this.textures.get(introKey);
+        const source = texture?.getSourceImage?.();
+        const baseWidth = source?.width ?? this.levelIntroImage.width;
+        const baseHeight = source?.height ?? this.levelIntroImage.height;
+        const maxWidth = this.scale.width * 0.6;
+        const maxHeight = this.scale.height * 0.6;
+        const scale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight, 1);
+        this.levelIntroImage.setScale(scale);
+        this.levelIntroImage.setScrollFactor(0);
+        this.levelIntroImage.setDepth(2000);
+        this.levelIntroImage.setAlpha(0);
+
+        this.tweens.add({
+            targets: this.levelIntroImage,
+            alpha: 1,
+            duration: 300,
+            ease: 'Sine.easeOut',
+            onComplete: () => {
+                this.time.delayedCall(1400, () => {
+                    this.tweens.add({
+                        targets: this.levelIntroImage,
+                        alpha: 0,
+                        duration: 300,
+                        ease: 'Sine.easeIn',
+                        onComplete: () => {
+                            if (this.levelIntroImage) {
+                                this.levelIntroImage.destroy();
+                                this.levelIntroImage = null;
+                            }
+                        }
+                    });
+                });
+            }
+        });
     }
 
     showGoalFeedback() {
