@@ -16,7 +16,7 @@ export class Menu extends Scene {
 
         this.input.keyboard.once('keydown-SPACE', () => {
             this.#stopMusic();
-            this.scene.start('Game');
+            this.scene.start('Game', { level: 0 });
         });
     }
 

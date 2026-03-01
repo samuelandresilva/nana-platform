@@ -7,6 +7,7 @@ import { Collectibles } from '../items/Collectibles';
 import { Enemies } from '../enemies/Enemies';
 
 const LEVELS = [LEVEL_1, LEVEL_2];
+const SHOW_DEBUG_HUD = false;
 
 export class Game extends Scene {
 
@@ -80,7 +81,7 @@ export class Game extends Scene {
         this.createBackgroundMusic();
         this.configureCamera();
         this.createHud();
-        this.createDebugHud();
+        if (SHOW_DEBUG_HUD) this.createDebugHud();
         this.createFlag();
         this.createOlaf();
         this.createDeathZone();
@@ -117,7 +118,7 @@ export class Game extends Scene {
         this.playerController.updatePlayer(delta);
         this.enemies.update();
         this.updateFlagProximity();
-        this.updateDebugHud();
+        if (SHOW_DEBUG_HUD) this.updateDebugHud();
     }
 
     createBackgroundMusic() {
@@ -295,7 +296,7 @@ export class Game extends Scene {
             if (nextLevel < LEVELS.length) {
                 this.scene.start('Game', { level: nextLevel });
             } else {
-                this.scene.start('Menu');
+                this.scene.start('Congratilations');
             }
         });
     }
